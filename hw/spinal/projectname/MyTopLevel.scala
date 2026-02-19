@@ -1,6 +1,7 @@
 package projectname
 
 import spinal.core._
+import spinal.core.internals._
 
 // Hardware definition
 case class MyTopLevel() extends Component {
@@ -22,9 +23,28 @@ case class MyTopLevel() extends Component {
 }
 
 object MyTopLevelVerilog extends App {
-  Config.spinal.generateVerilog(MyTopLevel())
+  val config = SpinalConfig()
+
+  // Add a early phase
+  config.addTransformationPhase(new PrintBaseTypes("Early"))
+
+  // Add a late phase
+  config.phasesInserters += {phases =>
+    phases.insert(phases.indexWhere(_.isInstanceOf[PhaseVerilog]), new PrintBaseTypes("Late"))
+  }
+
+  config.generateVerilog(MyTopLevel())
 }
 
 object MyTopLevelVhdl extends App {
-  Config.spinal.generateVhdl(MyTopLevel())
+  val config = SpinalConfig()
+
+  // Add a early phase
+  config.addTransformationPhase(new PrintBaseTypes("Early"))
+
+  // Add a late phase
+  config.phasesInserters += {phases =>
+    phases.insert(phases.indexWhere(_.isInstanceOf[PhaseVhdl]), new PrintBaseTypes("Late"))
+  }
+  config.generateVhdl(MyTopLevel())
 }
