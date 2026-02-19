@@ -1,4 +1,4 @@
-package projectname
+package doc_example
 
 import spinal.core._
 import spinal.core.formal._
