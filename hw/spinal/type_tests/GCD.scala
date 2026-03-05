@@ -1,0 +1,67 @@
+package type_tests
+
+import spinal.core._
+import spinal.core.internals._
+import spinal.core.sim._
+
+import scala.language.postfixOps
+
+case class GCD(width: Int = 32) extends Component {
+  val io = new Bundle {
+    val a             = in UInt(width bits)
+    val b             = in UInt(width bits)
+    val loadValues    = in Bool()
+    val result        = out UInt(width bits)
+    val resultIsValid = out Bool()
+  }
+
+  val x = Reg(UInt(width bits))
+  val y = Reg(UInt(width bits))
+
+  val tmp = x + y
+  when(x > y) {
+    x := x - y
+  }.otherwise {
+    y := y - x
+  }
+
+  when(io.loadValues) {
+    x := io.a
+    y := io.b
+  }
+
+  io.result        := x
+  io.resultIsValid := y === U(0)
+}
+
+object GcdVerilog extends App {
+  val config = SpinalConfig()
+
+  config.generateVerilog(GCD())
+}
+
+object GcdSim extends App {
+  Config.sim.compile(GCD()).doSim { dut =>
+    // Fork a process to generate the reset and the clock on the dut
+    dut.clockDomain.forkStimulus(period = 10)
+
+    dut.io.a #= 24
+    dut.io.b #= 36
+    dut.io.loadValues #= true
+    sleep(1)
+    dut.io.loadValues #= false
+    dut.clockDomain.waitActiveEdgeWhere(dut.io.resultIsValid.toBoolean)
+    assert(dut.io.resultIsValid.toBoolean == true, "Expecting to find valid result")
+    assert(dut.io.result.toLong == 13, s"Result was ${dut.io.result.toLong}, expected 13")
+    dut.io.a #= 24
+    dut.io.b #= 72
+    dut.clockDomain.reset #= true
+    dut.io.loadValues #= true
+    sleep(1)
+    dut.io.loadValues #= false
+    dut.clockDomain.reset #= false
+    dut.clockDomain.waitActiveEdgeWhere(dut.io.resultIsValid.toBoolean)
+    assert(dut.io.resultIsValid.toBoolean == true, "Expecting to find valid result")
+    assert(dut.io.result.toLong == 24, s"Result was ${dut.io.result.toLong}, expected 24")
+  }
+}
