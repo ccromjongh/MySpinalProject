@@ -1,7 +1,7 @@
 package type_tests
 
 import spinal.core._
-import spinal.core.internals.Phase
+import spinal.core.internals._
 import spinal.core.sim._
 
 import scala.collection.mutable.ArrayBuffer
@@ -13,11 +13,9 @@ object Config {
       resetActiveLevel = HIGH
     ),
     onlyStdLogicVectorAtTopLevelIo = false,
-    transformationPhases = {
-      val phases = new ArrayBuffer[Phase]()
-      phases.append(new DebugTypeInfo("Early"))
-      phases
-    }
+    phasesInserters = ArrayBuffer[(ArrayBuffer[Phase]) => Unit](
+      { phases => phases.insert(phases.indexWhere(_.isInstanceOf[PhaseInferWidth]), new DebugTypeInfo("Late")) }
+    )
   )
 
   def sim = SimConfig.withConfig(spinal).withVcdWave
