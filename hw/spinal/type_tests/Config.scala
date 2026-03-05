@@ -8,6 +8,7 @@ import scala.collection.mutable.ArrayBuffer
 
 object Config {
   def spinal = SpinalConfig(
+    reportIncludeSourceLocation = true,
     targetDirectory = "hw/gen",
     defaultConfigForClockDomains = ClockDomainConfig(
       resetActiveLevel = HIGH
@@ -15,7 +16,7 @@ object Config {
     onlyStdLogicVectorAtTopLevelIo = false,
     phasesInserters = ArrayBuffer[(ArrayBuffer[Phase]) => Unit](
       { phases => phases.insert(phases.indexWhere(_.isInstanceOf[PhaseInferWidth]), new DebugTypeInfo("Late")) }
-    )
+    ),
   )
 
   def sim = SimConfig.withConfig(spinal).withVcdWave
