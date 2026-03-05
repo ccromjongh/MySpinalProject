@@ -35,9 +35,7 @@ case class GCD(width: Int = 32) extends Component {
 }
 
 object GcdVerilog extends App {
-  val config = SpinalConfig()
-
-  config.generateVerilog(GCD())
+  Config.spinal.generateVerilog(GCD())
 }
 
 object GcdSim extends App {
