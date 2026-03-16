@@ -9,6 +9,7 @@ import scala.collection.mutable.ArrayBuffer
 object Config {
   def spinal = SpinalConfig(
     reportIncludeSourceLocation = true,
+    genLineComments=true,
     targetDirectory = "hw/gen",
     defaultConfigForClockDomains = ClockDomainConfig(
       resetActiveLevel = HIGH

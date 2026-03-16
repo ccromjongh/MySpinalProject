@@ -3,6 +3,8 @@ package doc_example
 import spinal.core._
 import spinal.core.internals._
 
+import scala.language.postfixOps
+
 // Hardware definition
 case class MyTopLevel() extends Component {
   val io = new Bundle {
