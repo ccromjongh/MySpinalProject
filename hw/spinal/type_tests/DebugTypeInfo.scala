@@ -4,6 +4,8 @@ import spinal.core._
 import spinal.core.internals._
 
 class DebugTypeInfo(message : String) extends Phase {
+  def convertSourceLoc(s: String): String = s.replace("@ ", "").replace(" l", ":")
+
   override def impl(pc: PhaseContext) = {
     println(message)
 
@@ -12,8 +14,7 @@ class DebugTypeInfo(message : String) extends Phase {
     def recComponent(c: Component): Unit = {
       println(
         s"""Component ${c.name}
-           | classname: "${c.getClass.getName}"
-           | location: ${c.getScalaLocationShort}
+           |  classname: "${c.getClass.getName}"
            |""".stripMargin.stripIndent())
 
       c.children.foreach(recComponent)
@@ -32,28 +33,25 @@ class DebugTypeInfo(message : String) extends Phase {
         case as: AssignmentStatement =>
           println(
             s"""Assignment leaf statement ${as.toString}
-               | source: ${as.source.toString}
-               | target: ${as.target.toString}
-               | final target: ${as.finalTarget.toString}
-               | location: ${as.locationString}""".stripMargin.stripIndent())
+               |  .source: ${as.source.toString}
+               |  .target: ${as.target.toString}
+               |  .final target: ${as.finalTarget.toString}
+               |  .location(${convertSourceLoc(as.locationString)})""".stripMargin.stripIndent())
         case bt: BaseType =>
           println(
             s"""BaseType leaf statement ${bt.name}
-               | classname: "${bt.getClass.getName}"
-               | width: ${bt.getBitsWidth}
-               | location: ${bt.getScalaLocationShort}
-               | dir: ${bt.dirString()}
-               | source: ${bt.getRealSource}""".stripMargin.stripIndent())
+               |  .width: ${bt.getBitsWidth}
+               |  .dir: ${bt.dirString()}
+               |  .source: ${bt.getRealSource}""".stripMargin.stripIndent())
         case as: AssertStatement =>
           println(
             s"""Assert leaf statement ${as.toString}
-               | message: ${as.message}
-               | condition: ${as.cond.toString}
-               | location: ${as.loc.toString}""".stripMargin.stripIndent())
+               |  .message: ${as.message}
+               |  .condition: ${as.cond.toString}""".stripMargin.stripIndent())
       }
 
-      println(s" classname: \"${ls.getClass.getName}\"\n")
-      ls.foreachExpression(recExpression)
+      println(s"  .classname: \"${ls.getClass.getName}\"\n")
+      ls.foreachExpression(recExpression(_))
     }
 
     def exploreTreeStatement(ts: TreeStatement): Unit = {
@@ -61,25 +59,26 @@ class DebugTypeInfo(message : String) extends Phase {
         case ws: WhenStatement =>
           println(
             s"""When tree statement ${ws.toString}
-               | condition: ${ws.cond.toString}
-               | when true: ${ws.whenTrue.toString}
-               | when false: ${ws.whenFalse.toString}""".stripMargin.stripIndent())
+               |  condition: ${ws.cond.toString}
+               |  when true: ${ws.whenTrue.toString}
+               |  when false: ${ws.whenFalse.toString}""".stripMargin.stripIndent())
         case ss: SwitchStatement =>
           println(
             s"""When tree statement ${ss.toString}
-               | value: ${ss.value.toString}
-               | elements: ${ss.elements.toString}""".stripMargin.stripIndent())
+               |  value: ${ss.value.toString}
+               |  elements: ${ss.elements.toString}""".stripMargin.stripIndent())
       }
       ts.foreachStatements(recStatement)
-      ts.foreachExpression(recExpression)
+      ts.foreachExpression(recExpression(_))
     }
 
-    def recExpression(e: Expression): Unit = {
+    def recExpression(e: Expression, depth: Int = 0): Unit = {
       e match {
         case op: Operator.BitVector.Add => println(s"Found ${op.left} + ${op.right}")
         case _ =>
       }
-      e.foreachExpression(recExpression)
+      println(s"${"  ".repeat(depth)}Expression: ${e.toString}")
+      e.foreachExpression(recExpression(_, depth+1))
     }
 
   }
