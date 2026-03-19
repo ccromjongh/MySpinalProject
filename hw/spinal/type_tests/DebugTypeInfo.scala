@@ -3,8 +3,12 @@ package type_tests
 import spinal.core._
 import spinal.core.internals._
 
+import scala.collection.mutable
+
 class DebugTypeInfo(message : String) extends Phase {
   def convertSourceLoc(s: String): String = s.replace("@ ", "").replace(" l", ":")
+
+  val signalsMetaData = mutable.Set[Data]()
 
   override def impl(pc: PhaseContext) = {
     println(message)
@@ -19,6 +23,49 @@ class DebugTypeInfo(message : String) extends Phase {
 
       c.children.foreach(recComponent)
       c.dslBody.foreachStatements(recStatement)
+      println(createHglddString(c))
+    }
+
+    def createHglddString(c: Component): String = {
+      val allRootSignals = mutable.Set[Data]()
+      // val structsToSpecify = mutable.Set[Data]()
+      def getRootParent(that: Data): Data = if (that.parent == null) that else getRootParent(that.parent)
+      val outputString = new StringBuilder
+
+      c.dslBody.walkLeafStatements {
+        case bt : BaseType =>
+          allRootSignals += getRootParent(bt)
+        case _ =>
+      }
+
+      outputString.append("""{"objects": [""")
+      outputString.append(s"""{"kind": "module", "module_name": "${c.name}", "port_vars": [""")
+
+      def processSignal(signal: Data): Unit = {
+        val elements: mutable.ArrayBuffer[(String, Data)] = signal match {
+          case b: Bundle => b.elements
+          case v: Vec[_] => v.elements
+          case _ => mutable.ArrayBuffer()
+        }
+        if (elements.nonEmpty) {
+          outputString.append(s"""{"opcode":"'{","operands":[""")
+          // Todo make recursive
+          outputString.append(elements.map(e => s"""{"sig_name": "${e._2.getName}"}""").mkString(","))
+          outputString.append("]}")
+        } else {
+          outputString.append(s"""{"sig_name": "${signal.getName}"}""")
+        }
+      }
+
+      for (signal <- allRootSignals) {
+        outputString.append(s"""{"var_name": "${signal.getName}", "value": """)
+        processSignal(signal)
+        outputString.append(s""", "type_name": "logic"},""")
+      }
+      outputString.setLength(outputString.length - 1)
+      outputString.append("]}")
+      outputString.append("]}")
+      outputString.result()
     }
 
     def recStatement(s: Statement): Unit = {
