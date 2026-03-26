@@ -11,6 +11,15 @@ case class NamedBundle() extends Bundle {
   val finalOutput = out SInt(32 bits)
 }
 
+case class SubComponent() extends Component {
+  val io = new Bundle {
+    val input = in UInt(8 bits)
+    val output = out UInt(32 bits)
+  }
+
+  io.output := (io.input << 5).resize(32) ^ U(0xdedbeef)
+}
+
 case class Scopes() extends Component {
   val io = new Bundle {
     val primaryInputs = new Bundle {
@@ -20,7 +29,12 @@ case class Scopes() extends Component {
     }
     val tempOutput = out UInt(32 bits)
     val finalOutput = out SInt(32 bits)
+    val subOutput = out UInt(32 bits)
   }
+
+  val subComponent = SubComponent()
+  subComponent.io.input := io.primaryInputs.a.resized
+  io.subOutput := subComponent.io.output
 
   val unnamedBundleIO = new Bundle {
     val tempOutput = out UInt(32 bits)

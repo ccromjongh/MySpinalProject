@@ -20,6 +20,8 @@ project/plugins/project/
 .bloop
 
 .idea
+.vscode
+.bsp
 out
 
 # Metals
@@ -37,7 +39,7 @@ bin/
 /*.vhd
 /*.v
 *.cf
-*.json
+/*.json
 *.vcd
 !tester/src/test/resources/*.vhd
 

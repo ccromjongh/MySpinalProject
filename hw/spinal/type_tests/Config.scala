@@ -16,7 +16,8 @@ object Config {
     ),
     onlyStdLogicVectorAtTopLevelIo = false,
     phasesInserters = ArrayBuffer[(ArrayBuffer[Phase]) => Unit](
-      { phases => phases.insert(phases.indexWhere(_.isInstanceOf[PhaseInferWidth]), new DebugTypeInfo("Late")) }
+      { phases => phases.insert(phases.indexWhere(_.isInstanceOf[PhaseInferWidth]), new TyVcdEmitter("Late")) },
+//      { phases => phases.insert(phases.indexWhere(_.isInstanceOf[PhaseInferWidth]), new DebugTypeInfo("Late")) }
     ),
   )
 

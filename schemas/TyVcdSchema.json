@@ -1,0 +1,200 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://raw.githubusercontent.com/your-repo/path/to/tvcd-schema.json",
+  "title": "TyVcd",
+  "description": "Represents the TyVcd format.",
+  "type": "object",
+  "properties": {
+    "scopes": {
+      "description": "List of top level scopes in the TyVcd format. Keys are scope IDs, values are objects with scope definitions.",
+      "patternProperties": {
+        "^.*$": {
+          "$ref": "#/$defs/ScopeDef",
+          "description": "Scope definition."
+        }
+      },
+      "type": "object"
+    }
+  },
+  "$defs": {
+    "ConstructorParams": {
+      "description": "The constructor parameters in a source language type",
+      "properties": {
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "tpe": {
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "description": "The value of the parameter used (not always available)",
+          "type": ["string", "number", "boolean", "null"]
+        }
+      },
+      "required": ["name", "tpe"],
+      "title": "ConstructorParams",
+      "type": "object"
+    },
+
+    "EnumValMap": {
+      "description": "HashMap<i64, String> representing enum values and their names.",
+      "additionalProperties": {
+        "type": "string"
+      },
+      "title": "EnumValMap",
+      "type": "object"
+    },
+
+    "ScopeDef": {
+      "description": "Represent a scope (i.e. a module instance) in the TyVcd format.",
+      "properties": {
+        "high_level_info": {
+          "$ref": "#/$defs/TypeInfo"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        },
+        "subscopes": {
+          "description": "The subscopes of this scope (References to other scope IDs)",
+          "$ref": "#/$defs/ScopeDef"
+        },
+        "variables": {
+          "items": {
+            "$ref": "#/$defs/Variable"
+          },
+          "title": "Variables",
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "required": ["name"],
+      "title": "ScopeDef",
+      "type": "object"
+    },
+
+    "TypeInfo": {
+      "description": "Structure to store the type information of a variable.",
+      "properties": {
+        "params": {
+          "description": "The parameters of the type (if any)",
+          "items": {
+            "$ref": "#/$defs/ConstructorParams"
+          },
+          "title": "Params",
+          "type": "array"
+        },
+        "type_name": {
+          "title": "Type Name",
+          "type": "string"
+        }
+      },
+      "additionalProperties": false,
+      "required": ["type_name"],
+      "title": "TypeInfo",
+      "type": "object"
+    },
+
+    "VariableKindGround": {
+      "description": "A ground type with a defined range of width",
+      "properties": {
+        "kind": {
+          "const": "ground"
+        },
+        "width": {
+          "format": "uint128",
+          "title": "Width",
+          "type": "integer"
+        }
+      },
+      "additionalProperties": false,
+      "required": ["kind", "width"],
+      "title": "Ground",
+      "type": "object"
+    },
+
+    "VariableKindStruct": {
+      "description": "A struct-like type",
+      "properties": {
+        "kind": {
+          "const": "struct"
+        },
+        "fields": {
+          "items": {
+            "$ref": "#/$defs/Variable"
+          },
+          "title": "Fields",
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "required": ["kind", "fields"],
+      "title": "Struct",
+      "type": "object"
+    },
+
+    "VariableKindVector": {
+      "description": "A vector-like type",
+      "properties": {
+        "kind": {
+          "const": "vector"
+        },
+        "fields": {
+          "items": {
+            "$ref": "#/$defs/Variable"
+          },
+          "title": "Fields",
+          "type": "array"
+        }
+      },
+      "additionalProperties": false,
+      "required": ["kind", "fields"],
+      "title": "Vector",
+      "type": "object"
+    },
+
+    "VariableKindExternal": {
+      "description": "An external type (from another source)",
+      "title": "External",
+      "type": "object",
+      "additionalProperties": false
+    },
+
+    "VariableKind": {
+      "description": "Represents the kind of a variable in the TyVcd format.",
+      "oneOf": [
+        {"$ref": "#/$defs/VariableKindGround"},
+        {"$ref": "#/$defs/VariableKindStruct"},
+        {"$ref": "#/$defs/VariableKindVector"},
+        {"$ref": "#/$defs/VariableKindExternal"}
+      ]
+    },
+
+    "Variable": {
+      "description": "Represent a variable in the TyVcd format.",
+      "properties": {
+        "enum_val_map": {
+          "$ref": "#/$defs/EnumValMap",
+          "description": "The reference enum type if any.",
+          "title": "Enum Val Map",
+          "type": ["object", "null"]
+        },
+        "high_level_info": {
+          "$ref": "#/$defs/TypeInfo"
+        },
+        "kind": {
+          "$ref": "#/$defs/VariableKind"
+        },
+        "name": {
+          "title": "Name",
+          "type": "string"
+        }
+      },
+      "required": ["name", "kind"],
+      "title": "Variable",
+      "type": "object"
+    }
+  }
+}
