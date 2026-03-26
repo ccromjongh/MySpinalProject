@@ -59,7 +59,13 @@
         },
         "subscopes": {
           "description": "The subscopes of this scope (References to other scope IDs)",
-          "$ref": "#/$defs/ScopeDef"
+          "patternProperties": {
+            "^.*$": {
+              "$ref": "#/$defs/ScopeDef",
+              "description": "Scope definition."
+            }
+          },
+          "type": "object"
         },
         "variables": {
           "items": {
