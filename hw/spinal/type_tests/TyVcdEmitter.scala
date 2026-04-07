@@ -5,22 +5,39 @@ import spinal.core.internals._
 
 import scala.annotation.tailrec
 import scala.collection.mutable
+import java.io.FileWriter
+import java.io.File
 
 class TyVcdEmitter(message : String) extends Phase {
   override def impl(pc: PhaseContext) = {
     println(message)
     val outputString = new StringBuilder
+    val outputFilePath = pc.config.targetDirectory + "/" + pc.topLevel.definitionName + ".json"
+    val f = new FileWriter(new File(outputFilePath))
 
-    // Open the top level and scopes
+    // Open the top level, TOP scope, and its subscopes
     outputString.append("""{
                           |    "$schema": "schemas/TyVcdSchema.json",
-                          |    "scopes": {""".stripMargin)
+                          |    "scopes": {
+                          |       "TOP": {
+                          |         "scope_value": {
+                          |           "ref_trace_name": "TOP"
+                          |         },
+                          |         "variables": [],
+                          |         "name": "TOP",
+                          |         "high_level_info": {
+                          |           "type_name": "TOP",
+                          |           "params": []
+                          |         },
+                          |         "subscopes": {""".stripMargin)
 
     outputString.append(createTyVcdScopeString(pc.topLevel))
 
     // Close top level and scopes
-    outputString.append(s"""\n    }\n}""")
+    outputString.append(s"""\n    }\n}\n}\n}""")
     println(outputString.result)
+    f.write(outputString.result)
+    f.close()
 
     def createTyVcdScopeString(c: Component): String = {
       val scopeString = new StringBuilder
@@ -45,7 +62,8 @@ class TyVcdEmitter(message : String) extends Phase {
         // Open variable and kind
         variableStringBuilder.append(
           s"""{
-             |  "name": "${signal.getName}",
+             |  "name": "${signal.name}",
+             |  "sig_value": { "ref_trace_name": "${signal.getName}" },
              |  ${highLevelTypeInfoString(signal)},
              |  "kind": {
              |    "kind": "${kind}",
@@ -65,7 +83,9 @@ class TyVcdEmitter(message : String) extends Phase {
       }
 
       // Open scope object and variables
-      scopeString.append(s""""${c.getName}": { "name": "${c.getName}", ${highLevelTypeInfoString(c)}, "variables": [""")
+      val name = if (c.name == "toplevel") c.definitionName else c.name
+      // Todo: Find out what versions of the name should be in what spot.
+      scopeString.append(s""""$name": { "name": "$name", "scope_value": { "ref_trace_name": "$name" }, ${highLevelTypeInfoString(c)}, "variables": [""")
       scopeString.append(allRootSignals.map(e => signalToVariableString(e)).mkString(", "))
       // Close variables and scope object
       scopeString.append(s"""], "subscopes": { ${c.children.map(createTyVcdScopeString).mkString(", ")} } }""")
